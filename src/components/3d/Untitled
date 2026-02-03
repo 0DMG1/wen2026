@@ -1,0 +1,269 @@
+import React, { useRef, Suspense, useMemo, useState, useEffect } from 'react';
+import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
+import { 
+  OrbitControls, Sparkles, Float, MeshTransmissionMaterial, 
+  Environment, Html, PositionalAudio
+} from '@react-three/drei';
+import * as THREE from 'three';
+
+// --- DATA POOLS ---
+const AMBIENT_PLAYLIST = [
+  { title: "Océano de Calma", url: "/music/ambient_ocean.mp3" },
+  { title: "James Blunt - Memories", url: "/music/james_blunt.mp3" },
+  { title: "Dean Lewis - Starry Night", url: "/music/dean_lewis.mp3" },
+];
+
+const ESFERA_POOL = ["/photos/esferas/00.JPG", "/photos/esferas/01.JPG", "/photos/esferas/02.JPG", "/photos/esferas/03.JPG", "/photos/esferas/04.JPG", "/photos/esferas/05.JPG", "/photos/esferas/06.JPG"];
+const COUPON_POOL = ["/photos/cupones/c01.jpg", "/photos/cupones/c02.jpg", "/photos/cupones/c03.jpg", "/photos/cupones/c04.jpg", "/photos/cupones/c05.jpg", "/photos/cupones/c06.jpg", "/photos/cupones/c07.jpg", "/photos/cupones/c08.jpg", "/photos/cupones/c09.jpg", "/photos/cupones/c10.jpg", "/photos/cupones/c11.jpg", "/photos/cupones/c12.jpg"];
+const SPHERE_SLOTS = [{ pos: [0, 5, 0], delay: 0 }, { pos: [-18, 12, -10], delay: 2 }, { pos: [16, -8, -10], delay: 4 }, { pos: [20, 16, -25], delay: 1 }, { pos: [-20, -12, -25], delay: 3 }];
+
+// --- UTILS ---
+const shuffle = (array) => [...array].sort(() => Math.random() - 0.5);
+
+const createPawTex = () => {
+  const canvas = document.createElement('canvas'); canvas.width = 128; canvas.height = 128;
+  const ctx = canvas.getContext('2d'); ctx.fillStyle = 'white';
+  ctx.beginPath(); ctx.ellipse(64, 85, 28, 22, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(32, 50, 12, 16, -0.5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(54, 35, 12, 16, -0.2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(78, 35, 12, 16, 0.2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(100, 50, 12, 16, 0.5, 0, Math.PI * 2); ctx.fill();
+  return new THREE.CanvasTexture(canvas);
+};
+
+const createSuperFlareTexture = () => {
+  const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512;
+  const ctx = canvas.getContext('2d'); const center = 256;
+  const glow = ctx.createRadialGradient(center, center, 0, center, center, 250);
+  glow.addColorStop(0, 'rgba(255, 255, 255, 1)'); glow.addColorStop(0.2, 'rgba(255, 255, 255, 0.1)'); glow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, 512, 512);
+  const drawRay = (w, l, angle) => { ctx.save(); ctx.translate(center, center); ctx.rotate(angle); const grad = ctx.createLinearGradient(-l/2, 0, l/2, 0); grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.8)'); grad.addColorStop(0, 'transparent'); grad.addColorStop(1, 'transparent'); ctx.fillStyle = grad; ctx.fillRect(-l/2, -w/2, l, w); ctx.restore(); };
+  for (let i = 0; i < 12; i++) drawRay(i % 3 === 0 ? 4 : 2, 512, (Math.PI * 2 / 12) * i);
+  return new THREE.CanvasTexture(canvas);
+};
+
+const createBottleGeometry = () => {
+  const points = [];
+  points.push(new THREE.Vector2(0, -8), new THREE.Vector2(2.5, -8), new THREE.Vector2(2.5, 2),
+              new THREE.Vector2(1, 6), new THREE.Vector2(1, 9), new THREE.Vector2(1.4, 9.5), new THREE.Vector2(0.9, 9.5));
+  return new THREE.LatheGeometry(points, 32);
+};
+
+// --- COMPONENTES ---
+
+const CameraListener = () => {
+  const { camera } = useThree();
+  const [listener] = useState(() => new THREE.AudioListener());
+  useEffect(() => { camera.add(listener); return () => camera.remove(listener); }, [camera, listener]);
+  return null;
+};
+
+const FadingPaw = ({ tex, pos, scale, rotation, stepDelay, pathDelay }) => {
+  const ref = useRef();
+  const maxOpacity = scale > 3 ? 0.5 : 0.3; 
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    const loopingT = (t - pathDelay) % 12;
+    const timeSinceStep = loopingT - stepDelay;
+    let opacity = 0;
+    if (timeSinceStep > 0 && timeSinceStep < 5) {
+        if (timeSinceStep < 0.5) opacity = (timeSinceStep / 0.5) * maxOpacity;
+        else if (timeSinceStep > 3) opacity = ((5 - timeSinceStep) / 2) * maxOpacity;
+        else opacity = maxOpacity;
+    }
+    if (ref.current) ref.current.opacity = opacity;
+  });
+  return (
+    <mesh position={pos} rotation={[-Math.PI / 2, 0, rotation + Math.PI]}>
+      <planeGeometry args={[scale, scale]} />
+      <meshBasicMaterial ref={ref} map={tex} transparent opacity={0} color="#eeeeff" depthWrite={false} />
+    </mesh>
+  );
+};
+
+const WalkingPath = ({ type, count = 20, startPos, endPos, pathDelay = 0 }) => {
+  const pawTex = useMemo(() => createPawTex(), []);
+  const paws = useMemo(() => {
+    const path = [];
+    const dx = endPos[0] - startPos[0]; const dz = endPos[2] - startPos[2]; const baseRotation = Math.atan2(dx, dz);
+    for (let i = 0; i < count; i++) {
+      const t = i / (count - 1); let x = startPos[0] + t * dx; let z = startPos[2] + t * dz;
+      let scale, currentStepDelay, offsetX, offsetZ; // CORREGIDO: Declaración de variables
+      const side = i % 2 === 0 ? 1 : -1; 
+      if (type === 'bulldog') {
+        scale = 4.5; const spread = 3.5; offsetX = Math.cos(baseRotation) * side * spread; offsetZ = -Math.sin(baseRotation) * side * spread;
+        currentStepDelay = i * 0.6;
+      } else if (type === 'small') {
+        scale = 2.2; const spread = 1.5; offsetX = Math.cos(baseRotation) * side * spread; offsetZ = -Math.sin(baseRotation) * side * spread;
+        currentStepDelay = i * 0.3;
+      } else {
+        scale = 1.5; const spread = 0.8; offsetX = Math.cos(baseRotation) * side * spread; offsetZ = -Math.sin(baseRotation) * side * spread;
+        currentStepDelay = i * 0.15;
+      }
+      path.push({ pos: [x + offsetX, -29.6, z + offsetZ], scale, rotation: baseRotation + (side * 0.1), stepDelay: currentStepDelay, pathDelay });
+    }
+    return path;
+  }, [type, count, startPos, endPos, pathDelay]);
+  return paws.map((p, i) => <FadingPaw key={i} tex={pawTex} {...p} />);
+};
+
+const MemorialStar = ({ position, name, color, isLowTide, audioUrl, isPlaying }) => {
+  const starTex = useMemo(() => createSuperFlareTexture(), []);
+  return (
+    <group position={position}>
+      <sprite scale={[12, 12, 1]}>
+        <spriteMaterial map={starTex} color={color} transparent blending={THREE.AdditiveBlending} opacity={0.8} />
+      </sprite>
+      <pointLight intensity={isLowTide ? 120 : 60} distance={70} color={color} />
+      {isPlaying && audioUrl && (
+        <Suspense fallback={null}>
+          <PositionalAudio url={audioUrl} distance={20} loop />
+        </Suspense>
+      )}
+      <Html position={[0, -3, 0]} center><div className="font-['Caveat'] text-4xl text-white opacity-40 whitespace-nowrap pointer-events-none">{name}</div></Html>
+    </group>
+  );
+};
+
+const WaterBubble = ({ position, texture, delay, onSelect }) => {
+  const ref = useRef();
+  useFrame((s) => { ref.current.position.y = position[1] + Math.sin(s.clock.getElapsedTime() * 0.5 + delay) * 0.8; ref.current.rotation.y = s.clock.getElapsedTime() * 0.4 + delay; });
+  return (
+    <Float speed={2}>
+      <group ref={ref} position={position} onPointerDown={(e) => { e.stopPropagation(); onSelect(); }}>
+        <mesh><sphereGeometry args={[4, 64, 64]} /><MeshTransmissionMaterial thickness={0.5} transmission={1} color="#aeeeee" /></mesh>
+        <mesh><circleGeometry args={[3.5, 32]} /><meshBasicMaterial map={texture} side={THREE.DoubleSide} transparent opacity={0.9} /></mesh>
+      </group>
+    </Float>
+  );
+};
+
+const DynamicPhotoSlot = ({ position, initialIndex, delay, onSelect }) => {
+  const [photoIndex, setPhotoIndex] = useState(initialIndex);
+  useEffect(() => {
+    const interval = setInterval(() => { setPhotoIndex((p) => (p + 1) % ESFERA_POOL.length); }, 15000 + (delay * 1000));
+    return () => clearInterval(interval);
+  }, [delay]);
+  const tex = useLoader(THREE.TextureLoader, ESFERA_POOL[photoIndex]);
+  return <WaterBubble texture={tex} position={position} delay={delay} onSelect={() => onSelect(ESFERA_POOL[photoIndex])} />;
+};
+
+const MessageBottle = ({ position, url, delay, onSelect }) => {
+  const ref = useRef();
+  const tex = useLoader(THREE.TextureLoader, url);
+  const geo = useMemo(() => createBottleGeometry(), []);
+  useFrame((s) => { ref.current.position.y = position[1] + Math.sin(s.clock.getElapsedTime() * 1 + delay) * 1.2; ref.current.rotation.y = s.clock.getElapsedTime() * 0.5 + delay; });
+  return (
+    <Float speed={1.5}><group ref={ref} position={position} rotation={[Math.PI/2, 0, 0]} onPointerDown={(e) => { e.stopPropagation(); onSelect(url); }}>
+      <mesh geometry={geo}><MeshTransmissionMaterial thickness={0.8} transmission={1} color="#cceeff" ior={1.5} /></mesh>
+      <mesh position={[0, -1, 0]} rotation={[0, Math.PI/2, 0]}><cylinderGeometry args={[1.8, 1.8, 10, 32, 1, true]} /><meshBasicMaterial map={tex} side={THREE.DoubleSide} transparent opacity={0.85} /></mesh>
+    </group></Float>
+  );
+};
+
+const TreasureChest = ({ position, url, onSelect }) => (
+  <group position={position} onPointerDown={(e) => { e.stopPropagation(); onSelect(url); }}>
+    <mesh position={[0, -1, 0]}><boxGeometry args={[6, 3.5, 4]} /><meshStandardMaterial color="#5d3a1e" roughness={0.6} emissive="#3d2110" emissiveIntensity={0.4} /></mesh>
+    <mesh position={[0, 0.75, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[2, 2, 6, 32, 1, false, 0, Math.PI]} /><meshStandardMaterial color="#6d4a2e" roughness={0.6} emissive="#4d2b16" emissiveIntensity={0.4} /></mesh>
+    <mesh position={[0, 0.5, 2.1]}><boxGeometry args={[1.2, 1.8, 0.5]} /><meshStandardMaterial color="#ffd700" metalness={1} emissive="#ffd700" emissiveIntensity={0.5} /></mesh>
+    <pointLight position={[0, 2, 0]} intensity={50} color="#ffaa00" distance={25} /><Sparkles count={20} scale={10} size={4} speed={0.4} color="#ffff00" />
+  </group>
+);
+
+const OceanContent = ({ isLowTide, setFocusedPhoto, isPlaying }) => {
+  const color = isLowTide ? '#2a1a00' : '#001e36';
+  const treasureData = useMemo(() => {
+    const shuffledCoupons = shuffle(COUPON_POOL); const slots = []; const anchors = [[-45, -55], [0, -60], [45, -55], [-35, -30], [35, -30], [0, -40]];
+    for (let i = 0; i < 12; i++) {
+      const isB = i < 6; const pos = isB ? [(Math.random() - 0.5) * 85, (Math.random() - 0.5) * 30, (Math.random() * -40) - 10] : [anchors[i-6][0] + (Math.random() - 0.5) * 15, -28, anchors[i-6][1] + (Math.random() - 0.5) * 10];
+      slots.push({ pos, delay: Math.random() * 5, url: shuffledCoupons[i], type: isB ? 'bottle' : 'chest' });
+    }
+    return slots;
+  }, []);
+
+  return (
+    <>
+      <CameraListener />
+      <color attach="background" args={[color]} />
+      <fog attach="fog" args={[color, 10, 150]} />
+      <ambientLight intensity={1.5} />
+      
+      <group position={[0, 45, -45]}>
+        <MemorialStar position={[-28, 5, 0]} name="Papá Wendy" color="#50ffb1" isLowTide={isLowTide} audioUrl="/music/papawendy.mp3" isPlaying={isPlaying} />
+        <MemorialStar position={[28, 12, -10]} name="Papá Daniel" color="#00e5ff" isLowTide={isLowTide} audioUrl="/music/papadaniel.mp3" isPlaying={isPlaying} />
+        <MemorialStar position={[15, 20, -30]} name="Mary & Andrea" color="#ffffff" isLowTide={isLowTide} audioUrl="/music/mary.mp3" isPlaying={isPlaying} />
+      </group>
+
+      <Suspense fallback={null}>
+        <Sparkles count={500} scale={100} size={30} speed={0.8} />
+        <WalkingPath type="bulldog" startPos={[50, 0, -60]} endPos={[-40, 0, 20]} count={22} pathDelay={0} />
+        <WalkingPath type="small" startPos={[-45, 0, -50]} endPos={[35, 0, 10]} count={30} pathDelay={4} />
+        <WalkingPath type="tiny" startPos={[20, 0, -65]} endPos={[-20, 0, 15]} count={40} pathDelay={8} />
+        {SPHERE_SLOTS.map((s, i) => <DynamicPhotoSlot key={`s-${i}`} position={s.pos} initialIndex={i % ESFERA_POOL.length} delay={s.delay} onSelect={setFocusedPhoto} />)}
+        {treasureData.map((item, i) => item.type === 'bottle' ? <MessageBottle key={`b-${i}`} position={item.pos} url={item.url} delay={item.delay} onSelect={setFocusedPhoto} /> : <TreasureChest key={`c-${i}`} position={item.pos} url={item.url} onSelect={setFocusedPhoto} />)}
+      </Suspense>
+
+      <OrbitControls enablePan={false} autoRotate autoRotateSpeed={0.3} maxDistance={95} minDistance={30} />
+      <Environment preset="night" />
+    </>
+  );
+};
+
+export const Scene3D = ({ isLowTide, setFocusedPhoto }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [trackIndex, setTrackIndex] = useState(0);
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio(AMBIENT_PLAYLIST[trackIndex].url);
+      audioRef.current.loop = true;
+    } else {
+      audioRef.current.src = AMBIENT_PLAYLIST[trackIndex].url;
+      if (isPlaying) audioRef.current.play().catch(e => console.log("Audio play blocked", e));
+    }
+    return () => { if (audioRef.current) audioRef.current.pause(); };
+  }, [trackIndex]);
+
+  useEffect(() => {
+    if (isPlaying) audioRef.current?.play().catch(() => setIsPlaying(false));
+    else audioRef.current?.pause();
+  }, [isPlaying]);
+
+  const handleNext = () => setTrackIndex(prev => (prev + 1) % AMBIENT_PLAYLIST.length);
+  const handlePrev = () => setTrackIndex(prev => (prev - 1 + AMBIENT_PLAYLIST.length) % AMBIENT_PLAYLIST.length);
+
+  return (
+    <div className="relative w-full h-full overflow-hidden">
+      <div className="absolute top-0 left-0 w-full z-50 pointer-events-none p-6 md:p-10 flex justify-between items-start">
+        <div className="flex flex-col gap-4 pointer-events-auto">
+          <div className="bg-black/60 backdrop-blur-xl p-6 rounded-[2rem] border border-white/10 shadow-2xl">
+            <h1 className="text-white text-4xl md:text-5xl font-['Caveat'] tracking-wider leading-none">Iris Wendy</h1>
+            <p className="text-cyan-400/80 text-[10px] tracking-[0.2em] mt-2 uppercase font-bold">Santuario Oceánico 2025</p>
+            <div className="flex flex-col gap-3 mt-6">
+                <span className="text-white/40 text-[9px] uppercase tracking-widest overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]">
+                    {isPlaying ? `▶ ${AMBIENT_PLAYLIST[trackIndex].title}` : '⏸ Música Pausada'}
+                </span>
+                <div className="flex items-center gap-4">
+                  <button onClick={handlePrev} className="text-white/60 hover:text-white text-xl transition-all">⏮</button>
+                  <button onClick={() => setIsPlaying(!isPlaying)} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-lg border ${isPlaying ? 'bg-cyan-500/30 border-cyan-400' : 'bg-white/10 border-white/20'}`}>
+                    {isPlaying ? <span className="text-cyan-300 text-2xl">⏸</span> : <span className="text-white text-2xl ml-1">▶️</span>}
+                  </button>
+                  <button onClick={handleNext} className="text-white/60 hover:text-white text-xl transition-all">⏭</button>
+                </div>
+            </div>
+          </div>
+        </div>
+        <div className="pointer-events-auto bg-black/60 backdrop-blur-xl p-6 rounded-[2rem] border border-white/10 shadow-2xl text-right">
+            <span className="text-cyan-400/80 text-[10px] tracking-[0.2em] block uppercase font-bold mb-1">Amaneceres</span>
+            <span className="text-white text-5xl md:text-6xl font-['Caveat'] leading-none">6,059</span>
+        </div>
+      </div>
+      <div className="absolute inset-0 z-0">
+        <Canvas camera={{ position: [0, 0, 70], fov: 45 }} gl={{ antialias: true, alpha: true }}>
+            <Suspense fallback={null}><OceanContent isLowTide={isLowTide} setFocusedPhoto={setFocusedPhoto} isPlaying={isPlaying} /></Suspense>
+        </Canvas>
+      </div>
+    </div>
+  );
+};
