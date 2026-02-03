@@ -71,6 +71,7 @@ const CameraListener = () => {
   return null;
 };
 
+// Pancarta Colosal Adaptable
 const GiantFloatingBanner = () => {
   const bannerRef = useRef();
   const [msgIdx, setMsgIdx] = useState(0);
@@ -81,13 +82,13 @@ const GiantFloatingBanner = () => {
     if (xPos.current < -250) { xPos.current = 250; setMsgIdx((prev) => (prev + 1) % BIRTHDAY_MESSAGES.length); }
     if (bannerRef.current) {
       const yShift = Math.sin(state.clock.getElapsedTime() * 1.5) * 8;
-      bannerRef.current.position.set(xPos.current, 25 + yShift, 40); 
+      bannerRef.current.position.set(xPos.current, 20 + yShift, 40); 
     }
   });
   return (
     <group ref={bannerRef}>
       <Html center distanceFactor={15}>
-        <div className="font-['Caveat'] text-white text-[15rem] md:text-[25rem] whitespace-nowrap select-none drop-shadow-[0_0_60px_rgba(255,255,255,1)] opacity-95 italic uppercase pointer-events-none">
+        <div className="font-['Caveat'] text-white text-[10rem] md:text-[25rem] whitespace-nowrap select-none drop-shadow-[0_0_60px_rgba(255,255,255,1)] opacity-95 italic uppercase pointer-events-none px-10">
           {BIRTHDAY_MESSAGES[msgIdx]}
         </div>
       </Html>
@@ -108,7 +109,7 @@ const MemorialStar = ({ position, name, color, isLowTide, audioUrl, isPlaying })
       <sprite ref={flareRef}><spriteMaterial map={starTex} color={color} transparent blending={THREE.AdditiveBlending} opacity={1} /></sprite>
       <pointLight intensity={isLowTide ? 600 : 250} distance={100} color={color} decay={1.5} />
       {isPlaying && audioUrl && (<Suspense fallback={null}><PositionalAudio url={audioUrl} distance={25} loop /></Suspense>)}
-      <Html position={[0, -4, 0]} center><div className="font-['Caveat'] text-5xl text-white opacity-90 whitespace-nowrap pointer-events-none drop-shadow-[0_0_15px_rgba(255,255,255,0.7)]">{name}</div></Html>
+      <Html position={[0, -4, 0]} center><div className="font-['Caveat'] text-3xl md:text-5xl text-white opacity-90 whitespace-nowrap pointer-events-none drop-shadow-[0_0_15px_rgba(255,255,255,0.7)]">{name}</div></Html>
     </group>
   );
 };
@@ -163,7 +164,6 @@ const TreasureChest = ({ position, url, onSelect }) => (
 );
 
 const OceanContent = ({ isLowTide, setFocusedPhoto, isPlaying }) => {
-  // FIJACIÓN: Guardamos las botellas en memoria para que no "refresquen"
   const treasureData = useMemo(() => {
     const shuffled = shuffleArray(COUPON_POOL);
     return shuffled.map((url, i) => {
@@ -204,6 +204,7 @@ export const Scene3D = ({ isLowTide, setFocusedPhoto }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [trackIndex, setTrackIndex] = useState(0);
   const audioRef = useRef(null);
+  const hasInteracted = useRef(false);
   
   const shuffledPlaylist = useMemo(() => {
     const mananitas = RAW_PLAYLIST.find(t => t.url.includes('mañanitas'));
@@ -211,7 +212,7 @@ export const Scene3D = ({ isLowTide, setFocusedPhoto }) => {
     return [mananitas, ...shuffleArray(others)];
   }, []);
 
-  // FIJACIÓN: Lógica de audio unificada y sin conflictos
+  // Lógica de audio corregida: Solo se desbloquea una vez y no interfiere al pausar
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio(shuffledPlaylist[trackIndex].url);
@@ -227,39 +228,55 @@ export const Scene3D = ({ isLowTide, setFocusedPhoto }) => {
     else audioRef.current?.pause();
   }, [isPlaying]);
 
-  const togglePlay = () => setIsPlaying(!isPlaying);
+  // DESBLOQUEADOR GLOBAL ÚNICO (No reactivo al estado para no romper el pause)
+  useEffect(() => {
+    const unlock = () => {
+      if (!hasInteracted.current) {
+        hasInteracted.current = true;
+        setIsPlaying(true);
+      }
+      window.removeEventListener('click', unlock);
+      window.removeEventListener('touchstart', unlock);
+    };
+    window.addEventListener('click', unlock);
+    window.addEventListener('touchstart', unlock);
+    return () => { window.removeEventListener('click', unlock); window.removeEventListener('touchstart', unlock); };
+  }, []);
+
+  const togglePlay = (e) => { e.stopPropagation(); setIsPlaying(!isPlaying); };
   const handleNext = () => setTrackIndex(prev => (prev + 1) % shuffledPlaylist.length);
   const handlePrev = () => setTrackIndex(prev => (prev - 1 + shuffledPlaylist.length) % shuffledPlaylist.length);
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-[#001e36]">
-      <div className="absolute top-0 left-0 w-full z-50 pointer-events-none p-6 md:p-10 flex justify-between items-start">
-        <div className="flex flex-col gap-4 pointer-events-auto">
-          <div className="bg-black/70 backdrop-blur-2xl p-7 rounded-[2.5rem] border border-white/20 shadow-2xl">
-            <h1 className="text-white text-4xl md:text-5xl font-['Caveat'] tracking-wider leading-none">Iris Wendy</h1>
-            <p className="text-cyan-300 text-[11px] tracking-[0.3em] mt-2 uppercase font-black">Santuario Oceánico</p>
-            <div className="flex flex-col gap-4 mt-6 border-t border-white/10 pt-4">
-                <span className="text-white/60 text-[10px] uppercase font-bold tracking-tighter truncate max-w-[200px]">
+      {/* UI SUPERIOR MEJORADA PARA MÓVIL */}
+      <div className="absolute top-0 left-0 w-full z-50 pointer-events-none p-3 md:p-10 flex flex-row justify-between items-start gap-2">
+        <div className="flex flex-col gap-2 pointer-events-auto max-w-[65%]">
+          <div className="bg-black/70 backdrop-blur-3xl p-4 md:p-7 rounded-[1.8rem] md:rounded-[2.5rem] border border-white/20 shadow-2xl scale-95 md:scale-100 origin-top-left">
+            <h1 className="text-white text-3xl md:text-5xl font-['Caveat'] tracking-wider leading-none">Iris Wendy</h1>
+            <p className="text-cyan-300 text-[10px] md:text-[11px] tracking-[0.2em] mt-1 uppercase font-black">Santuario Oceánico</p>
+            <div className="flex flex-col gap-3 mt-4 border-t border-white/10 pt-3">
+                <span className="text-white/60 text-[9px] md:text-[11px] uppercase font-bold tracking-tighter truncate max-w-[140px] md:max-w-[200px]">
                     {isPlaying ? `Escuchando: ${shuffledPlaylist[trackIndex].title}` : 'Recuerdos en Silencio'}
                 </span>
-                <div className="flex items-center gap-5">
-                  <button onClick={handlePrev} className="text-white/40 hover:text-cyan-400 text-2xl transition-all">«</button>
-                  {/* BOTÓN CON ICONO Y ESTADO SINCRONIZADOS */}
-                  <button onClick={togglePlay} className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500 shadow-xl border-2 ${isPlaying ? 'bg-cyan-500/20 border-cyan-400 scale-110 shadow-cyan-500/20' : 'bg-white/10 border-white/30 hover:bg-white/20'}`}>
-                    {isPlaying ? <span className="text-cyan-300 text-3xl">⏸</span> : <span className="text-white text-3xl ml-1">▶</span>}
+                <div className="flex items-center gap-4 md:gap-6">
+                  <button onClick={handlePrev} className="text-white/40 hover:text-cyan-400 text-2xl p-2 transition-all">«</button>
+                  <button onClick={togglePlay} className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center transition-all duration-500 shadow-xl border-2 ${isPlaying ? 'bg-cyan-500/20 border-cyan-400 scale-110' : 'bg-white/10 border-white/30'}`}>
+                    {isPlaying ? <span className="text-cyan-300 text-2xl md:text-3xl">⏸</span> : <span className="text-white text-2xl md:text-3xl ml-1">▶</span>}
                   </button>
-                  <button onClick={handleNext} className="text-white/40 hover:text-cyan-400 text-2xl transition-all">»</button>
+                  <button onClick={handleNext} className="text-white/40 hover:text-cyan-400 text-2xl p-2 transition-all">»</button>
                 </div>
             </div>
           </div>
         </div>
-        <div className="pointer-events-auto bg-black/70 backdrop-blur-2xl p-7 rounded-[2.5rem] border border-white/20 shadow-2xl text-right">
-            <span className="text-cyan-300 text-[11px] tracking-[0.3em] block uppercase font-black mb-2">Amaneceres</span>
-            <span className="text-white text-6xl md:text-7xl font-['Caveat'] leading-none">6,059</span>
+        <div className="pointer-events-auto bg-black/70 backdrop-blur-3xl p-4 md:p-7 rounded-[1.8rem] md:rounded-[2.5rem] border border-white/20 shadow-2xl text-right scale-95 md:scale-100 origin-top-right">
+            <span className="text-cyan-300 text-[10px] md:text-[11px] tracking-[0.2em] block uppercase font-black mb-1">Amaneceres</span>
+            <span className="text-white text-5xl md:text-7xl font-['Caveat'] leading-none">6,059</span>
         </div>
       </div>
+
       <div className="absolute inset-0 z-0">
-        <Canvas camera={{ position: [0, 0, 75], fov: 45 }} gl={{ antialias: true, alpha: true }} onPointerDown={() => !isPlaying && setIsPlaying(true)}>
+        <Canvas camera={{ position: [0, 0, 75], fov: 45 }} gl={{ antialias: true, alpha: true }}>
             <Suspense fallback={null}><OceanContent isLowTide={isLowTide} setFocusedPhoto={setFocusedPhoto} isPlaying={isPlaying} /></Suspense>
         </Canvas>
       </div>
