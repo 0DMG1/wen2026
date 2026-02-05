@@ -23,8 +23,8 @@ const BIRTHDAY_MESSAGES = [
   "¡ERES MI SUEÑO REALIDAD! 💫"
 ];
 
-const ESFERA_POOL = ["/photos/esferas/00.JPG", "/photos/esferas/01.JPG", "/photos/esferas/02.JPG", "/photos/esferas/03.JPG", "/photos/esferas/04.JPG", "/photos/esferas/05.JPG", "/photos/esferas/06.JPG"];
-const COUPON_POOL = ["/photos/cupones/c01.jpg", "/photos/cupones/c02.jpg", "/photos/cupones/c03.jpg", "/photos/cupones/c04.jpg", "/photos/cupones/c05.jpg", "/photos/cupones/c06.jpg", "/photos/cupones/c07.jpg", "/photos/cupones/c08.jpg", "/photos/cupones/c09.jpg", "/photos/cupones/c10.jpg", "/photos/cupones/c11.jpg", "/photos/cupones/c12.jpg"];
+const ESFERA_POOL = ["/photos/esferas/00.webp", "/photos/esferas/01.webp", "/photos/esferas/02.webp", "/photos/esferas/03.webp", "/photos/esferas/04.webp", "/photos/esferas/05.webp", "/photos/esferas/06.webp"];
+const COUPON_POOL = ["/photos/cupones/c01.webp", "/photos/cupones/c02.webp", "/photos/cupones/c03.webp", "/photos/cupones/c04.webp", "/photos/cupones/c05.webp", "/photos/cupones/c06.webp", "/photos/cupones/c07.webp", "/photos/cupones/c08.webp", "/photos/cupones/c09.webp", "/photos/cupones/c10.webp", "/photos/cupones/c11.webp", "/photos/cupones/c12.webp"];
 const SPHERE_SLOTS = [{ pos: [0, 5, 0], delay: 0 }, { pos: [-18, 12, -10], delay: 2 }, { pos: [16, -8, -10], delay: 4 }, { pos: [20, 16, -25], delay: 1 }, { pos: [-20, -12, -25], delay: 3 }];
 
 // --- UTILS ---
