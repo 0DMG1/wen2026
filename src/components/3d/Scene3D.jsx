@@ -8,18 +8,35 @@ import * as THREE from 'three';
 
 // --- DATA POOLS ---
 const RAW_PLAYLIST = [
-  { title: "Las Mañanitas 🎂", url: "/music/mañanitas.mp3" },
-  { title: "Océano de Calma", url: "/music/ambient_ocean.mp3" },
-  { title: "James Blunt - Memories", url: "/music/james_blunt.mp3" },
-  { title: "Dean Lewis - Starry Night", url: "/music/dean_lewis.mp3" },
+  { title: "Las Mañanitas 🎂", url: "/music/mañanitas.m4a" },
+  { title: "Melendi-Leonel_Garcia", url: "/music/Para_Empezar.m4a" },
+  { title: "James Blunt", url: "/music/Monsters.m4a" },
+  { title: "Dean Lewis", url: "/music/How_Do_I_Say_Goodbye.m4a" },
+  { title: "Juan Gabriel", url: "/music/Abrazame_muy_fuerte.mp3" },
+  { title: "Carlos Rivera", url: "/music/Te_Esperaba.m4a" },
+  { title: "Carlos Rivera", url: "/music/Gracias_a_Ti.m4a" },
+  { title: "Carlos Rivera", url: "/music/Fascinacion.mp3" },
+  { title: "Camilo", url: "/music/Favorito.m4a" },
+  { title: "Camilo Sesto", url: "/music/Amor_de_Mujer.m4a" },
+  { title: "Camilo Sesto", url: "/music/Solo_el_Cielo_y_Tu.mp3" },
+  { title: "Ricardo Montaner", url: "/music/El_Poder_de_Tu_Amor.m4a" },
+  { title: "Bronco-RicardoMontaner", url: "/music/La_Cima_del_Cielo.mp3" },
+  { title: "Pablo Alboran", url: "/music/Solamente_Tu.mp3" },
+  { title: "Luz de dia", url: "https://www.dropbox.com/scl/fi/p5bmy0sqpavvbonq8rp9w/Los_Enanitos_Verdes_-_Luz_de_Dia.mp3?rlkey=gb518qnj0d8fdb12085bgqayy&st=9e0hb9xb&dl=0&raw=1" },
+  { title: "Tu refugio", url: "https://www.dropbox.com/scl/fi/escpm2lnl4ukcm4exqalz/Pablo_Alboran_-_Tu_refugio.mp3?rlkey=1qlp19177h7754815z7n1tm7m&st=r3efsv2y&dl=0&raw=1" },
+  { title: "Siempre", url: "https://www.dropbox.com/scl/fi/qcb32l3rfii8r13qdbzpx/Il_Divo_-_Siempre.mp3?rlkey=9lrnu9i5aphrywllwwjn2lb83&st=u8t0tu1m&dl=0&raw=1" },
+  { title: "Prometo", url: "https://www.dropbox.com/scl/fi/pydbbgauuy85r1jsrjjui/Fonseca_-_Prometo.mp3?rlkey=hs2rj0fxbvkpuhfjzikmeexsu&st=6vgr0ze6&dl=0&raw=1" },
+  { title: "Resumiendo", url: "https://www.dropbox.com/scl/fi/fpuoiubwq8x6ljt3p5nd1/Ricardo_Montaner_-_Resumiendo.mp3?rlkey=5c5bu8j3vgl8o8y2lf3f46z56&st=alv7umbg&dl=0&raw=1" },
+  { title: "Carlos rivera", url: "https://www.dropbox.com/scl/fi/rvn3xf1rczhw066eqf80x/Carlos_Rivera_-_La_Luna_del_Cielo.mp3?rlkey=kl30bbhv1ouapxz4fpmh65cu4&st=fgh6vyrw&dl=0&raw=1" }
 ];
 
 const BIRTHDAY_MESSAGES = [
-  "¡FELIZ CUMPLEAÑOS IRIS! 🎂",
-  "¡FELICIDADES WENDY! ✨",
-  "¡TE AMO INFINITO! ❤️",
+  "¡FELIZ CUMPLEAÑOS IRIS, AMOR MIO! 🎂",
+  "¡FELICIDADES WENDY HERMOSA! ✨",
+  "¡TE AMO MUCHISIMO! ❤️",
   "¡ERES MI TODO! 🌹",
   "¡POR MIL AMANECERES MÁS! 🌅",
+  "❤️ ME ENCANTAS!!!! ❤️",
   "¡ERES MI SUEÑO REALIDAD! 💫"
 ];
 
@@ -182,9 +199,9 @@ const OceanContent = ({ isLowTide, setFocusedPhoto, isPlaying }) => {
       <ambientLight intensity={1.5} />
       <GiantFloatingBanner />
       <group position={[0, 45, -45]}>
-        <MemorialStar position={[-35, 5, 0]} name="Papá Wendy" color="#50ffb1" isLowTide={isLowTide} audioUrl="/music/papawendy.mp3" isPlaying={isPlaying} />
-        <MemorialStar position={[35, 12, -10]} name="Papá Daniel" color="#00e5ff" isLowTide={isLowTide} audioUrl="/music/papadaniel.mp3" isPlaying={isPlaying} />
-        <MemorialStar position={[15, 20, -30]} name="Mary & Andrea" color="#ffffff" isLowTide={isLowTide} audioUrl="/music/mary.mp3" isPlaying={isPlaying} />
+        <MemorialStar position={[-35, 5, 0]} name="." color="#50ffb1" isLowTide={isLowTide} audioUrl="/music/How_Do_I_Say_Goodbye.m4a" isPlaying={isPlaying} />
+        <MemorialStar position={[35, 12, -10]} name="." color="#00e5ff" isLowTide={isLowTide} audioUrl="/music/Monsters.m4a" isPlaying={isPlaying} />
+        <MemorialStar position={[15, 20, -30]} name="." color="#ffffff" isLowTide={isLowTide} audioUrl="/music/Abrazame_muy_fuerte.mp3" isPlaying={isPlaying} />
       </group>
       <Suspense fallback={null}>
         <Sparkles count={600} scale={110} size={35} speed={0.7} />
