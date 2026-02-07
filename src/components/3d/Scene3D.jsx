@@ -272,9 +272,9 @@ export const Scene3D = ({ isLowTide, setFocusedPhoto }) => {
           <div className="bg-black/70 backdrop-blur-3xl p-4 md:p-7 rounded-[1.8rem] md:rounded-[2.5rem] border border-white/20 shadow-2xl scale-95 md:scale-100 origin-top-left">
             <h1 className="text-white text-3xl md:text-5xl font-['Caveat'] tracking-wider leading-none">Iris Wendy</h1>
             <p className="text-cyan-300 text-[10px] md:text-[11px] tracking-[0.2em] mt-1 uppercase font-black">Santuario Oceánico</p>
-            <div className="flex flex-col gap-3 mt-4 border-t border-white/10 pt-3">
-                <span className="text-white/60 text-[9px] md:text-[11px] uppercase font-bold tracking-tighter truncate max-w-[140px] md:max-w-[200px]">
-                    {isPlaying ? `Escuchando: ${shuffledPlaylist[trackIndex].title}` : 'Recuerdos en Silencio'}
+            <div className="flex flex-col gap-4 mt-4 border-t border-white/10 pt-3">
+                <span className="text-white/60 text-[14px] md:text-[11px] uppercase font-bold tracking-tighter truncate max-w-[140px] md:max-w-[200px]">
+                    {isPlaying ? `-> ${shuffledPlaylist[trackIndex].title}` : 'Recuerdos en Silencio'}
                 </span>
                 <div className="flex items-center gap-4 md:gap-6">
                   <button onClick={handlePrev} className="text-white/40 hover:text-cyan-400 text-2xl p-2 transition-all">«</button>
