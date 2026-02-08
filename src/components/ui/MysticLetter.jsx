@@ -32,29 +32,35 @@ export const MysticLetter = ({ onClose }) => {
           
           <div className="text-center mb-12">
              <Sparkles className="text-cyan-400 w-10 h-10 mx-auto mb-4 animate-bounce" />
-             <h2 className="text-4xl md:text-6xl font-['Cinzel'] font-bold tracking-[0.3em] text-white">Bienvenida</h2>
+             <h2 className="text-3xl md:text-6xl font-['Cinzel'] font-bold tracking-[0.3em] text-white">Bienvenida Cumpleañera</h2>
           </div>
 
           <div className="max-h-[55vh] overflow-y-auto pr-4 text-cyan-50 font-['Montserrat'] text-lg md:text-xl leading-relaxed space-y-8 text-justify custom-scroll">
             <p>
-              <span className="font-['Cinzel'] text-cyan-300 font-bold text-3xl block mb-4">Wendy:</span>
-              <TypewriterText text="Dicen que el agua de los océanos no se destruye, solo se transforma. Tras 15 años navegando juntos, he aprendido que tú eres exactamente como el mar: profunda, a veces tormentosa, increíblemente inteligente y con una risa que es el único faro que reconozco." delay={1} />
+              <span className="font-['Cinzel'] text-cyan-300 font-bold text-3xl block mb-4">Amor mio:</span>
+              <TypewriterText text="Feliz cumpleaños amor de mi vida espero este dia te la pases muy bien y te sientas amada y deseada." delay={1} />
+            </p>
+            <p>
+              <TypewriterText text="Dicen que el agua de los océanos no se destruye, solo se transforma. Tras 15 años navegando juntos, he aprendido que tú eres exactamente como el mar: profunda, a veces tormentosa, increíblemente inteligente y con una risa que es el único faro que reconozco. Admiro tu resiliencia." delay={2} />
             </p>
 
             <p>
-              <TypewriterText text="Sé que el 2025 se ha empeñado en enviarnos olas demasiado grandes. Sé que el silencio de los que se han ido a veces pesa más que el agua misma." delay={6} />
+              <TypewriterText text="Sé que el 2025 se ha empeñado en enviarnos olas demasiado grandes. Sé que el silencio de los que se han ido a veces pesa más que el agua misma. Pero sabes que no estas sola mi cumpleañera  y esposa." delay={6} />
             </p>
 
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 10, duration: 1 }} className="border-l-4 border-cyan-500/50 pl-6 py-4 italic text-white bg-cyan-950/40 rounded-r-2xl shadow-xl">
-              "Pero este Santuario es para recordarte que <span className="text-cyan-300 font-bold not-italic">Daniel</span> ha pasado de los códigos a las estrellas solo para construirte una orilla segura."
+              "Pero este Santuario es para recordarte que <span className="text-cyan-300 font-bold not-italic">Daniel</span>  te ama demasiado y que eres la luz en su vida, y esta para ti, para construirte una orilla segura."
             </motion.div>
 
             <p>
-              <TypewriterText text="Aquí, entre delfines de luz y el eco de Goliath y Bruce, solo hay espacio para ti. Bienvenida a tu refugio." delay={12} />
+              <TypewriterText text="Aquí, entre tus luces y sombras, con Goliath y Bruce, solo hay espacio para ti. Bienvenida a tu refugio." delay={12} />
             </p>
 
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 15 }} className="text-center text-cyan-400 font-['Cinzel'] text-2xl font-bold tracking-widest pt-8 border-t border-white/5">
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 14 }} className="text-center text-cyan-400 font-['Cinzel'] text-1xl font-bold tracking-widest pt-8 border-t border-white/5">
               La marea hoy está a tu favor.
+            </motion.p>
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 15 }} className="text-center text-cyan-400 font-['Cinzel'] text-1xl font-bold tracking-widest pt-8 border-t border-white/5">
+              Feliz cumpleaños, mi Acuariana Mística.
             </motion.p>
           </div>
 
